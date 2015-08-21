@@ -1,0 +1,49 @@
+---
+title: "NOAA Storm Database Analisys - Reproducible Research Peer Assessment 2"
+author: "Daniel Resende"
+date: "21 de agosto de 2015"
+output: html_document
+---
+
+## Synopsis
+
+This report explores U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database, which tracks characteristics of major storm and wheather events in the United States, to trace the social and economic impacts of those events.
+
+```{r echo = TRUE}
+library(knitr)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+```
+
+## Data Processing
+
+The data will be downloaded directly from the source and processed here. No preprocess was done to the data. The structure of the data and the first 10 rows of the first 6 columns.
+
+```{r echo = TRUE, cache = TRUE}
+if(!file.exists("stormData.bz2")){
+  file.url <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
+  download.file(file.url, "stormData.bz2", method = "curl")
+  dateDownloaded <- date()
+}
+storm.data <- read.csv("stormData.bz2")
+colnames(storm.data) <- tolower(colnames(storm.data))
+```
+```{r echo = TRUE}
+str(storm.data)
+kable(head(select(storm.data, 1:6), 10))
+```
+
+## Social impact - total harm
+
+As social impact the total harm to society will be analysed. The total harm will be the sum of fatalities and injuries caused by the event type. Thus we'll try to find out which types of events (as indicated in the EVTYPE variable), across all United States, are most harmful with respect to population health.
+
+```{r echo = TRUE}
+social <- select(storm.data, evtype, fatalities, injuries) %>%
+  mutate(total.harm = fatalities + injuries) %>%
+  group_by(evtype) %>%
+  summarize(avg.fatalities = mean(fatalities),
+            avg.injuries = mean(injuries),
+            avg.total.harm = mean(total.harm))
+str(social)
+```
