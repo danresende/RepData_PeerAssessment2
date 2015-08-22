@@ -10,15 +10,27 @@ output: html_document
 This report explores U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database, which tracks characteristics of major storm and wheather events in the United States, to trace the social and economic impacts of those events.
 
 ```{r echo = TRUE}
+if(!("knitr" %in% installed.packages())){
+  install.packages("knitr")
+}
 library(knitr)
+if(!("dplyr" %in% installed.packages())){
+  install.packages("dplyr")
+}
 library(dplyr)
+if(!("lubridate" %in% installed.packages())){
+  install.packages("lubridate")
+}
 library(lubridate)
+if(!("ggplot2" %in% installed.packages())){
+  install.packages("ggplot2")
+}
 library(ggplot2)
 ```
 
 ## Data Processing
 
-The data will be downloaded directly from the source and processed here. No preprocess was done to the data. The structure of the data and the first 10 rows of the first 6 columns.
+The data will be downloaded directly from the source and processed here. No preprocess was done to the data. 
 
 ```{r echo = TRUE, cache = TRUE}
 if(!file.exists("stormData.bz2")){
@@ -28,11 +40,9 @@ if(!file.exists("stormData.bz2")){
 }
 storm.data <- read.csv("stormData.bz2")
 colnames(storm.data) <- tolower(colnames(storm.data))
+levels(storm.data$evtype) <- toupper(levels(storm.data$evtype))
 ```
-```{r echo = TRUE}
-str(storm.data)
-kable(head(select(storm.data, 1:6), 10))
-```
+
 
 ## Social impact - total harm
 
