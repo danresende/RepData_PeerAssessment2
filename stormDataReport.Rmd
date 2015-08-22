@@ -9,7 +9,7 @@ output: html_document
 
 This report explores U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database, which tracks characteristics of major storm and wheather events in the United States, to trace the social and economic impacts of those events.
 
-```{r echo = TRUE}
+```{r echo = TRUE, message = FALSE}
 if(!("knitr" %in% installed.packages())){
   install.packages("knitr")
 }
@@ -40,7 +40,17 @@ if(!file.exists("stormData.bz2")){
 }
 storm.data <- read.csv("stormData.bz2")
 colnames(storm.data) <- tolower(colnames(storm.data))
+```
+
+### Adjusting the Event Type data.
+
+First the event names were all standardized to upper case, any punctuation was replaced by space, leading and trailing spaces were removed and double spaces were changed to single spaces.
+
+```{r echo = TRUE, cache = TRUE}
 levels(storm.data$evtype) <- toupper(levels(storm.data$evtype))
+levels(storm.data$evtype) <- gsub("([[:punct:]])|\\s+"," ", levels(storm.data$evtype))
+levels(storm.data$evtype) <- gsub("^\\s+|\\s+$", "", levels(storm.data$evtype))
+levels(storm.data$evtype) <- gsub("  ", " ", levels(storm.data$evtype))
 ```
 
 

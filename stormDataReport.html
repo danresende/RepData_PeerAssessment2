@@ -70,19 +70,21 @@ img {
 <div id="synopsis" class="section level2">
 <h2>Synopsis</h2>
 <p>This report explores U.S. National Oceanic and Atmospheric Administration’s (NOAA) storm database, which tracks characteristics of major storm and wheather events in the United States, to trace the social and economic impacts of those events.</p>
-<pre class="r"><code>library(knitr)
-library(dplyr)</code></pre>
-<pre><code>## 
-## Attaching package: 'dplyr'
-## 
-## The following objects are masked from 'package:stats':
-## 
-##     filter, lag
-## 
-## The following objects are masked from 'package:base':
-## 
-##     intersect, setdiff, setequal, union</code></pre>
-<pre class="r"><code>library(lubridate)
+<pre class="r"><code>if(!(&quot;knitr&quot; %in% installed.packages())){
+  install.packages(&quot;knitr&quot;)
+}
+library(knitr)
+if(!(&quot;dplyr&quot; %in% installed.packages())){
+  install.packages(&quot;dplyr&quot;)
+}
+library(dplyr)
+if(!(&quot;lubridate&quot; %in% installed.packages())){
+  install.packages(&quot;lubridate&quot;)
+}
+library(lubridate)
+if(!(&quot;ggplot2&quot; %in% installed.packages())){
+  install.packages(&quot;ggplot2&quot;)
+}
 library(ggplot2)</code></pre>
 </div>
 <div id="data-processing" class="section level2">
@@ -94,143 +96,15 @@ library(ggplot2)</code></pre>
   dateDownloaded &lt;- date()
 }
 storm.data &lt;- read.csv(&quot;stormData.bz2&quot;)
-colnames(storm.data) &lt;- tolower(colnames(storm.data))
-levels(storm.data$evtype) &lt;- toupper(levels(storm.data$evtype))</code></pre>
-<p>The structure of the data and the first 10 rows of the first 6 columns.</p>
-<pre class="r"><code>str(storm.data)</code></pre>
-<pre><code>## 'data.frame':    902297 obs. of  37 variables:
-##  $ state__   : num  1 1 1 1 1 1 1 1 1 1 ...
-##  $ bgn_date  : Factor w/ 16335 levels &quot;1/1/1966 0:00:00&quot;,..: 6523 6523 4242 11116 2224 2224 2260 383 3980 3980 ...
-##  $ bgn_time  : Factor w/ 3608 levels &quot;00:00:00 AM&quot;,..: 272 287 2705 1683 2584 3186 242 1683 3186 3186 ...
-##  $ time_zone : Factor w/ 22 levels &quot;ADT&quot;,&quot;AKS&quot;,&quot;AST&quot;,..: 7 7 7 7 7 7 7 7 7 7 ...
-##  $ county    : num  97 3 57 89 43 77 9 123 125 57 ...
-##  $ countyname: Factor w/ 29601 levels &quot;&quot;,&quot;5NM E OF MACKINAC BRIDGE TO PRESQUE ISLE LT MI&quot;,..: 13513 1873 4598 10592 4372 10094 1973 23873 24418 4598 ...
-##  $ state     : Factor w/ 72 levels &quot;AK&quot;,&quot;AL&quot;,&quot;AM&quot;,..: 2 2 2 2 2 2 2 2 2 2 ...
-##  $ evtype    : Factor w/ 898 levels &quot;   HIGH SURF ADVISORY&quot;,..: 758 758 758 758 758 758 758 758 758 758 ...
-##  $ bgn_range : num  0 0 0 0 0 0 0 0 0 0 ...
-##  $ bgn_azi   : Factor w/ 35 levels &quot;&quot;,&quot;  N&quot;,&quot; NW&quot;,..: 1 1 1 1 1 1 1 1 1 1 ...
-##  $ bgn_locati: Factor w/ 54429 levels &quot;&quot;,&quot; Christiansburg&quot;,..: 1 1 1 1 1 1 1 1 1 1 ...
-##  $ end_date  : Factor w/ 6663 levels &quot;&quot;,&quot;1/1/1993 0:00:00&quot;,..: 1 1 1 1 1 1 1 1 1 1 ...
-##  $ end_time  : Factor w/ 3647 levels &quot;&quot;,&quot; 0900CST&quot;,..: 1 1 1 1 1 1 1 1 1 1 ...
-##  $ county_end: num  0 0 0 0 0 0 0 0 0 0 ...
-##  $ countyendn: logi  NA NA NA NA NA NA ...
-##  $ end_range : num  0 0 0 0 0 0 0 0 0 0 ...
-##  $ end_azi   : Factor w/ 24 levels &quot;&quot;,&quot;E&quot;,&quot;ENE&quot;,&quot;ESE&quot;,..: 1 1 1 1 1 1 1 1 1 1 ...
-##  $ end_locati: Factor w/ 34506 levels &quot;&quot;,&quot; CANTON&quot;,&quot; TULIA&quot;,..: 1 1 1 1 1 1 1 1 1 1 ...
-##  $ length    : num  14 2 0.1 0 0 1.5 1.5 0 3.3 2.3 ...
-##  $ width     : num  100 150 123 100 150 177 33 33 100 100 ...
-##  $ f         : int  3 2 2 2 2 2 2 1 3 3 ...
-##  $ mag       : num  0 0 0 0 0 0 0 0 0 0 ...
-##  $ fatalities: num  0 0 0 0 0 0 0 0 1 0 ...
-##  $ injuries  : num  15 0 2 2 2 6 1 0 14 0 ...
-##  $ propdmg   : num  25 2.5 25 2.5 2.5 2.5 2.5 2.5 25 25 ...
-##  $ propdmgexp: Factor w/ 19 levels &quot;&quot;,&quot;-&quot;,&quot;?&quot;,&quot;+&quot;,..: 17 17 17 17 17 17 17 17 17 17 ...
-##  $ cropdmg   : num  0 0 0 0 0 0 0 0 0 0 ...
-##  $ cropdmgexp: Factor w/ 9 levels &quot;&quot;,&quot;?&quot;,&quot;0&quot;,&quot;2&quot;,..: 1 1 1 1 1 1 1 1 1 1 ...
-##  $ wfo       : Factor w/ 542 levels &quot;&quot;,&quot; CI&quot;,&quot;%SD&quot;,..: 1 1 1 1 1 1 1 1 1 1 ...
-##  $ stateoffic: Factor w/ 250 levels &quot;&quot;,&quot;ALABAMA, Central&quot;,..: 1 1 1 1 1 1 1 1 1 1 ...
-##  $ zonenames : Factor w/ 25112 levels &quot;&quot;,&quot;                                                                                                                               &quot;| __truncated__,..: 1 1 1 1 1 1 1 1 1 1 ...
-##  $ latitude  : num  3040 3042 3340 3458 3412 ...
-##  $ longitude : num  8812 8755 8742 8626 8642 ...
-##  $ latitude_e: num  3051 0 0 0 0 ...
-##  $ longitude_: num  8806 0 0 0 0 ...
-##  $ remarks   : Factor w/ 436781 levels &quot;&quot;,&quot;\t&quot;,&quot;\t\t&quot;,..: 1 1 1 1 1 1 1 1 1 1 ...
-##  $ refnum    : num  1 2 3 4 5 6 7 8 9 10 ...</code></pre>
-<pre class="r"><code>kable(head(select(storm.data, 1:6), 10))</code></pre>
-<table>
-<thead>
-<tr class="header">
-<th align="right">state__</th>
-<th align="left">bgn_date</th>
-<th align="left">bgn_time</th>
-<th align="left">time_zone</th>
-<th align="right">county</th>
-<th align="left">countyname</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="right">1</td>
-<td align="left">4/18/1950 0:00:00</td>
-<td align="left">0130</td>
-<td align="left">CST</td>
-<td align="right">97</td>
-<td align="left">MOBILE</td>
-</tr>
-<tr class="even">
-<td align="right">1</td>
-<td align="left">4/18/1950 0:00:00</td>
-<td align="left">0145</td>
-<td align="left">CST</td>
-<td align="right">3</td>
-<td align="left">BALDWIN</td>
-</tr>
-<tr class="odd">
-<td align="right">1</td>
-<td align="left">2/20/1951 0:00:00</td>
-<td align="left">1600</td>
-<td align="left">CST</td>
-<td align="right">57</td>
-<td align="left">FAYETTE</td>
-</tr>
-<tr class="even">
-<td align="right">1</td>
-<td align="left">6/8/1951 0:00:00</td>
-<td align="left">0900</td>
-<td align="left">CST</td>
-<td align="right">89</td>
-<td align="left">MADISON</td>
-</tr>
-<tr class="odd">
-<td align="right">1</td>
-<td align="left">11/15/1951 0:00:00</td>
-<td align="left">1500</td>
-<td align="left">CST</td>
-<td align="right">43</td>
-<td align="left">CULLMAN</td>
-</tr>
-<tr class="even">
-<td align="right">1</td>
-<td align="left">11/15/1951 0:00:00</td>
-<td align="left">2000</td>
-<td align="left">CST</td>
-<td align="right">77</td>
-<td align="left">LAUDERDALE</td>
-</tr>
-<tr class="odd">
-<td align="right">1</td>
-<td align="left">11/16/1951 0:00:00</td>
-<td align="left">0100</td>
-<td align="left">CST</td>
-<td align="right">9</td>
-<td align="left">BLOUNT</td>
-</tr>
-<tr class="even">
-<td align="right">1</td>
-<td align="left">1/22/1952 0:00:00</td>
-<td align="left">0900</td>
-<td align="left">CST</td>
-<td align="right">123</td>
-<td align="left">TALLAPOOSA</td>
-</tr>
-<tr class="odd">
-<td align="right">1</td>
-<td align="left">2/13/1952 0:00:00</td>
-<td align="left">2000</td>
-<td align="left">CST</td>
-<td align="right">125</td>
-<td align="left">TUSCALOOSA</td>
-</tr>
-<tr class="even">
-<td align="right">1</td>
-<td align="left">2/13/1952 0:00:00</td>
-<td align="left">2000</td>
-<td align="left">CST</td>
-<td align="right">57</td>
-<td align="left">FAYETTE</td>
-</tr>
-</tbody>
-</table>
+colnames(storm.data) &lt;- tolower(colnames(storm.data))</code></pre>
+<div id="adjusting-the-event-type-data." class="section level3">
+<h3>Adjusting the Event Type data.</h3>
+<p>First the event names were all standardized to upper case, any punctuation was replaced by space, leading and trailing spaces were removed and double spaces were changed to single spaces.</p>
+<pre class="r"><code>levels(storm.data$evtype) &lt;- toupper(levels(storm.data$evtype))
+levels(storm.data$evtype) &lt;- gsub(&quot;([[:punct:]])|\\s+&quot;,&quot; &quot;, levels(storm.data$evtype))
+levels(storm.data$evtype) &lt;- gsub(&quot;^\\s+|\\s+$&quot;, &quot;&quot;, levels(storm.data$evtype))
+levels(storm.data$evtype) &lt;- gsub(&quot;  &quot;, &quot; &quot;, levels(storm.data$evtype))</code></pre>
+</div>
 </div>
 <div id="social-impact---total-harm" class="section level2">
 <h2>Social impact - total harm</h2>
@@ -242,11 +116,11 @@ levels(storm.data$evtype) &lt;- toupper(levels(storm.data$evtype))</code></pre>
             avg.injuries = mean(injuries),
             avg.total.harm = mean(total.harm))
 str(social)</code></pre>
-<pre><code>## Classes 'tbl_df', 'tbl' and 'data.frame':    898 obs. of  4 variables:
-##  $ evtype        : Factor w/ 898 levels &quot;   HIGH SURF ADVISORY&quot;,..: 1 2 3 4 5 6 7 8 9 10 ...
-##  $ avg.fatalities: num  0 0 0 0 0 0 0 0 0 0 ...
-##  $ avg.injuries  : num  0 0 0 0 0 0 0 0 0 0 ...
-##  $ avg.total.harm: num  0 0 0 0 0 0 0 0 0 0 ...
+<pre><code>## Classes 'tbl_df', 'tbl' and 'data.frame':    841 obs. of  4 variables:
+##  $ evtype        : Factor w/ 841 levels &quot;HIGH SURF ADVISORY&quot;,..: 1 2 3 4 5 6 7 8 9 10 ...
+##  $ avg.fatalities: num  0 0.00457 0.01802 0.05185 0.00229 ...
+##  $ avg.injuries  : num  0 0.00304 0.03274 0.33194 0.03163 ...
+##  $ avg.total.harm: num  0 0.00761 0.05076 0.38379 0.03392 ...
 ##  - attr(*, &quot;drop&quot;)= logi TRUE</code></pre>
 </div>
 
