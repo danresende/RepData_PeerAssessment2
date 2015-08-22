@@ -18,6 +18,10 @@ if(!("dplyr" %in% installed.packages())){
   install.packages("dplyr")
 }
 library(dplyr)
+if(!("plyr" %in% installed.packages())){
+  install.packages("plyr")
+}
+library(plyr)
 if(!("lubridate" %in% installed.packages())){
   install.packages("lubridate")
 }
@@ -53,21 +57,23 @@ levels(storm.data$evtype) <- gsub("^\\s+|\\s+$", "", levels(storm.data$evtype))
 levels(storm.data$evtype) <- gsub("  ", " ", levels(storm.data$evtype))
 ```
 
-Then the event name were clustered as the National Weather Service Instruction 10-1605 page 6 suggests.
+Then the event name were clustered to group toghether diferent classifications of the same event.
 
 ```{r echo = TRUE}
-evclass <- c("ASTRONOMICAL LOW TIDE", "AVALANCHE", "BLIZZARD", "COASTAL FLOOD",
-             "COLD/WIND CHILL", "DEBRIS FLOW", "DENSE FOG", "DENSE SMOKE",
-             "DROUGHT", "DUST DEVIL", "DUST STORM", "EXCESSIVE HEAT",
-             "EXTREME COLD/WIND CHILL", "FLASH FLOOD", "FLOOD", "FROST/FREEZE",
-             "FUNNEL CLOUD", "FREEZING FOG", "HAIL", "HEAT", "HEAVY RAIN",
-             "HEAVY SNOW", "HIGH SURF", "HIGH WIND", "HURRICANE", "ICE STORM",
-             "LAKE-EFFECT SNOW", "LAKESHORE FLOOD", "LIGHTNING", "MARINE HAIL",
-             "MARINE HIGH WIND", "MARINE STRONG WIND", "MARINE THUNDERSTORM WIND",
-             "RIP CURRENT", "SEICHE", "SLEET", "STORM SURGE/TIDE", "STRONG WIND",
-             "THUNDERSTORM WIND", "TORNADO", "TROPICAL DEPRESSION",
-             "TROPICAL STORM", "TSUNAMI", "VOLCANIC ASH", "WATERSPOUT",
-             "WILDFIRE", "WINTER STORM", "WINTER WEATHER")
+types <- levels(storm.data$evtype)
+old.types <- types
+evclass.clusters <- c("TIDE", "AVALANCHE", "BLIZZARD", "FLOOD", "COLD", "DEBRIS FLOW",
+                      "FOG", "SMOKE", "DROUGHT", "DUST", "DUST STORM", "HEAT",
+                      "FREEZE", "FUNNEL CLOUD", "HAIL", "RAIN", "SNOW", "HIGH SURF",
+                      "WIND", "HURRICANE", "ICE STORM", "LIGHTNING", "HAIL",
+                      "RIP CURRENT", "SEICHE", "SLEET", "TORNADO",
+                      "TROPICAL DEPRESSION", "TROPICAL STORM", "TSUNAMI",
+                      "VOLCANIC ASH", "WATERSPOUT", "WILDFIRE", "WINTER STORM",
+                      "WINTER WEATHER")
+for(event in evclass.clusters) {
+  types[grep(event, types)] <- event
+}
+storm.data$evtype <- mapvalues(storm.data$evtype, from = old.types, to = types)
 ```
 
 ## Social impact - total harm
