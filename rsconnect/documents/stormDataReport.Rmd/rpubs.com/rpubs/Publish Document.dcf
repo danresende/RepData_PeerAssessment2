@@ -1,0 +1,7 @@
+name: Publish Document
+account: rpubs
+server: rpubs.com
+bundleId:
+        https://api.rpubs.com/api/v1/document/104580/6081583d31de46ed92e59fcbde165a6f
+url: http://rpubs.com/danresende/104580
+when: 1440363036.27746

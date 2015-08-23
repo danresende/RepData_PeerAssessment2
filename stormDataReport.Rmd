@@ -30,7 +30,12 @@ if(!("ggplot2" %in% installed.packages())){
   install.packages("ggplot2")
 }
 library(ggplot2)
+if(!("gridExtra" %in% installed.packages())){
+  install.packages("gridExtra")
+}
+library(gridExtra)
 ```
+
 
 ## Data Processing
 
@@ -47,6 +52,8 @@ colnames(storm.data) <- tolower(colnames(storm.data))
 ```
 
 ### Adjusting the Event Type data.
+
+Due to lots of diferent classifications of events and typos found in the data, it's necessary to process the Event Type data (EVTYPE) to better visualization.
 
 First the event names were all standardized to upper case, any punctuation was replaced by space, leading and trailing spaces were removed and double spaces were changed to single spaces.
 
@@ -109,7 +116,28 @@ types[types == "" | types == "APACHE COUNTY" | types == "DAM BREAK" |
 storm.data$evtype <- mapvalues(storm.data$evtype, from = old.types, to = types)
 ```
 
-## Social impact - total harm
+### Adjusting the property and crop data.
+
+Due to diferent ways to classify the magnitude of the damage in property and crop, it's necessary to adjust the data.
+
+```{r echo = TRUE}
+storm.data$propdmgexp <- revalue(storm.data$propdmgexp, c("-" = NA, "?" = NA, "+" = NA,
+                                                          "h" = 2, "H" = 2, "K" = 3,
+                                                          "m" = 6, "M" = 6, "B" = 9))
+storm.data$propdmgexp <- as.numeric(as.character(storm.data$propdmgexp))
+storm.data$cropdmgexp <- revalue(storm.data$cropdmgexp, c("?"=NA, "K"=3, "k"=3, "m"=6,
+                                                          "M"=6, "B"=9))
+storm.data$cropdmgexp <- as.numeric(as.character(storm.data$cropdmgexp))
+
+storm.data <- mutate(storm.data, propdmg = propdmg * (10 ^ propdmgexp) / (10 ^ 6),
+                     cropdmg = cropdmg * (10 ^ cropdmgexp) / (10 ^ 6))
+
+```
+
+
+## Results
+
+### Social impact - total harm
 
 As social impact the total harm to society will be analysed. The total harm will be the sum of fatalities and injuries caused by the event type. Thus we'll try to find out which types of events (as indicated in the EVTYPE variable), across all United States, are most harmful with respect to population health.
 
@@ -121,8 +149,59 @@ social <- dplyr::select(storm.data, evtype, fatalities, injuries) %>%
             injuries = sum(injuries), total.harm = sum(total.harm)) %>%
   dplyr::filter(fatalities > 0 | injuries > 0) %>%
   dplyr::arrange(desc(total.harm))
+```
+
+#### Plot of the top 5 most harmful events across the US.
+
+```{r echo = TRUE}
+chart.data <- ggplot(head(social, 5), aes(x = evtype))
+fat.chart <- chart.data + geom_bar(aes(y = fatalities, fill = total.harm), stat = "identity") + ylab("") + xlab("") + labs(title = "Fatalities") + coord_flip() + theme(legend.title = element_blank())
+inj.chart <- chart.data + geom_bar(aes(y = injuries, fill = total.harm), stat = "identity") + ylab("") + xlab("Top 5 harmful events") + labs(title = "Injuries") + coord_flip() + theme(legend.title = element_blank())
+harm.chart <- chart.data + geom_bar(aes(y = total.harm, fill = total.harm), stat = "identity") + ylab("Number of cases") + xlab("") + labs(title = "Total harm")  + coord_flip() + theme(legend.title = element_blank())
+
+grid.arrange(fat.chart, inj.chart, harm.chart, nrow = 3)
+```
+
+#### Table of the fatalities, injuries and total harm across the US.
+
+```{r echo = TRUE}
 kable(social, col.names = c("EVENT TYPE", "FATALITIES", "INJURIES", "TOTAL HARM"))
 ```
+
+### Economic impact - total damage
+
+As economic impact the total damage to properties and crops will be analysed. The total damage will be the sum of damages to properties and crops caused by the event type. Thus we'll try to find out which types of events (as indicated in the EVTYPE variable), across all United States, have the most impact on economy.
+
+```{r echo = TRUE}
+economy <- dplyr::select(storm.data, evtype, cropdmg, propdmg) %>%
+  dplyr::group_by(evtype) %>%
+  dplyr::summarize(cropdmg = sum(cropdmg, na.rm = TRUE),
+            propdmg = sum(propdmg, na.rm = TRUE)) %>%
+  dplyr::mutate(total.dmg = cropdmg + propdmg) %>%
+  dplyr::filter(cropdmg > 0 | cropdmg > 0) %>%
+  dplyr::arrange(desc(total.dmg))
+```
+
+#### Plot of the top 5 most harmful events across the US.
+
+```{r echo = TRUE}
+chart.data <- ggplot(head(economy, 5), aes(x = evtype))
+crop.chart <- chart.data + geom_bar(aes(y = cropdmg, fill = total.dmg), stat = "identity") + ylab("") + xlab("") + labs(title = "Crop Damage") + coord_flip() + theme(legend.title = element_blank())
+prop.chart <- chart.data + geom_bar(aes(y = propdmg, fill = total.dmg), stat = "identity") + ylab("") + xlab("Top 5 events") + labs(title = "Prop Damage") + coord_flip() + theme(legend.title = element_blank())
+dmg.chart <- chart.data + geom_bar(aes(y = total.dmg, fill = total.dmg), stat = "identity") + ylab("Value of damage in US$ millions") + xlab("") + labs(title = "Total damage")  + coord_flip() + theme(legend.title = element_blank())
+
+grid.arrange(crop.chart, prop.chart, dmg.chart, nrow = 3)
+```
+
+#### Table of the fatalities, injuries and total harm across the US.
+
+```{r echo = TRUE}
+kable(economy, col.names = c("EVENT TYPE", "CROP DAMAGE", "PROP DAMAGE", "TOTAL DAMAGE"))
+```
+
+## Conclusion
+
+Floods, Tornados, Huricanes and Storms are the key events that government management should focus their efforts. Tornados in special are the most harmful events and are one with the most economic impact. Floods are specially economic harmful.
 
 
 
