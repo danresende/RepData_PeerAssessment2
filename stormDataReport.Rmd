@@ -57,22 +57,55 @@ levels(storm.data$evtype) <- gsub("^\\s+|\\s+$", "", levels(storm.data$evtype))
 levels(storm.data$evtype) <- gsub("  ", " ", levels(storm.data$evtype))
 ```
 
-Then the event name were clustered to group toghether diferent classifications of the same event.
+Then the event name were clustered to group toghether diferent classifications of the same event and correct the typos found in the data.
 
 ```{r echo = TRUE}
 types <- levels(storm.data$evtype)
 old.types <- types
+
+#typos
+types[grep("AVALANCE", types)] <- "AVALANCHE"
+types[grep("BEACH EROSIN", types)] <- "BEACH EROSION"
+types[grep("COASTALSTORM", types)] <- "COASTAL STORM"
+types[grep("FLASH FLOOODING", types)] <- "FLASH FLOOD"
+types[grep("LIGHTING", types)] <- "LIGHTNING"
+types[grep("LIGNTNING", types)] <- "LIGHTNING"
+types[grep("TORNDAO", types)] <- "TORNADO"
+types[grep("BRUSH FIRES", types)] <- "BRUSH FIRE"
+types[grep("FLD", types)] <- "FLOOD"
+
+#broad clustering
 evclass.clusters <- c("TIDE", "AVALANCHE", "BLIZZARD", "FLOOD", "COLD", "DEBRIS FLOW",
-                      "FOG", "SMOKE", "DROUGHT", "DUST", "DUST STORM", "HEAT",
-                      "FREEZE", "FUNNEL CLOUD", "HAIL", "RAIN", "SNOW", "HIGH SURF",
-                      "WIND", "HURRICANE", "ICE STORM", "LIGHTNING", "HAIL",
-                      "RIP CURRENT", "SEICHE", "SLEET", "TORNADO",
-                      "TROPICAL DEPRESSION", "TROPICAL STORM", "TSUNAMI",
-                      "VOLCANIC ASH", "WATERSPOUT", "WILDFIRE", "WINTER STORM",
-                      "WINTER WEATHER")
+                      "FOG", "SMOKE", "DROUGHT", "DUST", "HEAT", "FREEZ",
+                      "FUNNEL CLOUD", "HAIL", "RAIN", "SNOW", "SURF",
+                      "WIND", "HURRICANE", "LIGHTNING", "HAIL", "SEICHE",
+                      "SLEET", "TORNADO", "TROPICAL DEPRESSION", "STORM",
+                      "TSUNAMI", "VOLCANIC", "WATER", "WILDFIRE", "ICE",
+                      "EROSION", "COOL", "DRY", "WET", "PRECIP", "FROST", "FUNNEL",
+                      "SHOWER", "SWELL", "WAVE", "HYPERTHERMIA", "HYPOTHERMIA", "SLIDE",
+                      "WARM", "HIGH TEMP", "SEA", "WINTER", "FIRE", "MARINE", "WINTRY")
+
 for(event in evclass.clusters) {
   types[grep(event, types)] <- event
 }
+
+#granular clustering
+types[types == "TYPHOON"] <- "HURRICANE"
+types[types == "WATER"] <- "FLOOD"
+types[types == "SLEET"] <- "SNOW"
+types[types == "GLAZE" | types == "ICY ROADS" | types == "FROST"] <- "ICE"
+types[types == "SLIDE" | types == "LANDSPOUT"] <- "SLUMP"
+types[types == "PRECIP" | types == "SHOWER" | types == "WET"] <- "RAIN"
+types[types == "WARM" | types == "HYPERTHERMIA" | types == "HIGH TEMP"] <- "HEAT"
+types[types == "FREEZ" | types == "HYPOTHERMIA" | types == "WINTER" |
+        types == "WINTRY" | types == "LOW TEMPERATURE" | types == "COOL"] <- "COLD"
+types[types == "TSTM" | types == "THUNDERSTORM" | types == "TURBULENCE"] <- "STORM"
+types[types == "SURF" | types == "SURGE" | types == "TSUNAMI" | types == "SWELL" |
+        types == "SEA" | types =="WAVE" | types == "SEICHE"] <- "WAVES"
+types[types == "" | types == "APACHE COUNTY" | types == "DAM BREAK" |
+        types =="HEAVY MIX" | types =="RIP CURRENT" | types =="RIP CURRENTS" |
+        types =="HIGH" | types == "MARINE" | types == "FUNNEL"] <- "OTHER"
+
 storm.data$evtype <- mapvalues(storm.data$evtype, from = old.types, to = types)
 ```
 
@@ -81,11 +114,10 @@ storm.data$evtype <- mapvalues(storm.data$evtype, from = old.types, to = types)
 As social impact the total harm to society will be analysed. The total harm will be the sum of fatalities and injuries caused by the event type. Thus we'll try to find out which types of events (as indicated in the EVTYPE variable), across all United States, are most harmful with respect to population health.
 
 ```{r echo = TRUE}
-social <- select(storm.data, evtype, fatalities, injuries) %>%
-  mutate(total.harm = fatalities + injuries) %>%
-  group_by(evtype) %>%
-  summarize(avg.fatalities = mean(fatalities),
-            avg.injuries = mean(injuries),
-            avg.total.harm = mean(total.harm))
-str(social)
-```
+social <- dplyr::select(storm.data, evtype, fatalities, injuries) %>%
+  dplyr::group_by(evtype) %>%
+  dplyr::summarize(fatalities = sum(fatalities),
+            injuries = sum(injuries)) %>%
+  dplyr::filter(fatalities > 0 | injuries > 0)
+kable(social, col.names = c("EVENT TYPE", "FATALITIES", "INJURIES"))
+social

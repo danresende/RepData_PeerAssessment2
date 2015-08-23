@@ -78,6 +78,10 @@ if(!(&quot;dplyr&quot; %in% installed.packages())){
   install.packages(&quot;dplyr&quot;)
 }
 library(dplyr)
+if(!(&quot;plyr&quot; %in% installed.packages())){
+  install.packages(&quot;plyr&quot;)
+}
+library(plyr)
 if(!(&quot;lubridate&quot; %in% installed.packages())){
   install.packages(&quot;lubridate&quot;)
 }
@@ -104,24 +108,211 @@ colnames(storm.data) &lt;- tolower(colnames(storm.data))</code></pre>
 levels(storm.data$evtype) &lt;- gsub(&quot;([[:punct:]])|\\s+&quot;,&quot; &quot;, levels(storm.data$evtype))
 levels(storm.data$evtype) &lt;- gsub(&quot;^\\s+|\\s+$&quot;, &quot;&quot;, levels(storm.data$evtype))
 levels(storm.data$evtype) &lt;- gsub(&quot;  &quot;, &quot; &quot;, levels(storm.data$evtype))</code></pre>
+<p>Then the event name were clustered to group toghether diferent classifications of the same event and correct the typos found in the data.</p>
+<pre class="r"><code>types &lt;- levels(storm.data$evtype)
+old.types &lt;- types
+
+#typos
+types[grep(&quot;AVALANCE&quot;, types)] &lt;- &quot;AVALANCHE&quot;
+types[grep(&quot;BEACH EROSIN&quot;, types)] &lt;- &quot;BEACH EROSION&quot;
+types[grep(&quot;COASTALSTORM&quot;, types)] &lt;- &quot;COASTAL STORM&quot;
+types[grep(&quot;FLASH FLOOODING&quot;, types)] &lt;- &quot;FLASH FLOOD&quot;
+types[grep(&quot;LIGHTING&quot;, types)] &lt;- &quot;LIGHTNING&quot;
+types[grep(&quot;LIGNTNING&quot;, types)] &lt;- &quot;LIGHTNING&quot;
+types[grep(&quot;TORNDAO&quot;, types)] &lt;- &quot;TORNADO&quot;
+types[grep(&quot;BRUSH FIRES&quot;, types)] &lt;- &quot;BRUSH FIRE&quot;
+types[grep(&quot;FLD&quot;, types)] &lt;- &quot;FLOOD&quot;
+
+#broad clustering
+evclass.clusters &lt;- c(&quot;TIDE&quot;, &quot;AVALANCHE&quot;, &quot;BLIZZARD&quot;, &quot;FLOOD&quot;, &quot;COLD&quot;, &quot;DEBRIS FLOW&quot;,
+                      &quot;FOG&quot;, &quot;SMOKE&quot;, &quot;DROUGHT&quot;, &quot;DUST&quot;, &quot;HEAT&quot;, &quot;FREEZ&quot;,
+                      &quot;FUNNEL CLOUD&quot;, &quot;HAIL&quot;, &quot;RAIN&quot;, &quot;SNOW&quot;, &quot;SURF&quot;,
+                      &quot;WIND&quot;, &quot;HURRICANE&quot;, &quot;LIGHTNING&quot;, &quot;HAIL&quot;, &quot;SEICHE&quot;,
+                      &quot;SLEET&quot;, &quot;TORNADO&quot;, &quot;TROPICAL DEPRESSION&quot;, &quot;STORM&quot;,
+                      &quot;TSUNAMI&quot;, &quot;VOLCANIC&quot;, &quot;WATER&quot;, &quot;WILDFIRE&quot;, &quot;ICE&quot;,
+                      &quot;EROSION&quot;, &quot;COOL&quot;, &quot;DRY&quot;, &quot;WET&quot;, &quot;PRECIP&quot;, &quot;FROST&quot;, &quot;FUNNEL&quot;,
+                      &quot;SHOWER&quot;, &quot;SWELL&quot;, &quot;WAVE&quot;, &quot;HYPERTHERMIA&quot;, &quot;HYPOTHERMIA&quot;, &quot;SLIDE&quot;,
+                      &quot;WARM&quot;, &quot;HIGH TEMP&quot;, &quot;SEA&quot;, &quot;WINTER&quot;, &quot;FIRE&quot;, &quot;MARINE&quot;, &quot;WINTRY&quot;)
+
+for(event in evclass.clusters) {
+  types[grep(event, types)] &lt;- event
+}
+
+#granular clustering
+types[types == &quot;TYPHOON&quot;] &lt;- &quot;HURRICANE&quot;
+types[types == &quot;WATER&quot;] &lt;- &quot;FLOOD&quot;
+types[types == &quot;SLEET&quot;] &lt;- &quot;SNOW&quot;
+types[types == &quot;GLAZE&quot; | types == &quot;ICY ROADS&quot; | types == &quot;FROST&quot;] &lt;- &quot;ICE&quot;
+types[types == &quot;SLIDE&quot; | types == &quot;LANDSPOUT&quot;] &lt;- &quot;SLUMP&quot;
+types[types == &quot;PRECIP&quot; | types == &quot;SHOWER&quot; | types == &quot;WET&quot;] &lt;- &quot;RAIN&quot;
+types[types == &quot;WARM&quot; | types == &quot;HYPERTHERMIA&quot; | types == &quot;HIGH TEMP&quot;] &lt;- &quot;HEAT&quot;
+types[types == &quot;FREEZ&quot; | types == &quot;HYPOTHERMIA&quot; | types == &quot;WINTER&quot; |
+        types == &quot;WINTRY&quot; | types == &quot;LOW TEMPERATURE&quot; | types == &quot;COOL&quot;] &lt;- &quot;COLD&quot;
+types[types == &quot;TSTM&quot; | types == &quot;THUNDERSTORM&quot; | types == &quot;TURBULENCE&quot;] &lt;- &quot;STORM&quot;
+types[types == &quot;SURF&quot; | types == &quot;SURGE&quot; | types == &quot;TSUNAMI&quot; | types == &quot;SWELL&quot; |
+        types == &quot;SEA&quot; | types ==&quot;WAVE&quot; | types == &quot;SEICHE&quot;] &lt;- &quot;WAVES&quot;
+types[types == &quot;&quot; | types == &quot;APACHE COUNTY&quot; | types == &quot;DAM BREAK&quot; |
+        types ==&quot;HEAVY MIX&quot; | types ==&quot;RIP CURRENT&quot; | types ==&quot;RIP CURRENTS&quot; |
+        types ==&quot;HIGH&quot; | types == &quot;MARINE&quot; | types == &quot;FUNNEL&quot;] &lt;- &quot;OTHER&quot;
+
+storm.data$evtype &lt;- mapvalues(storm.data$evtype, from = old.types, to = types)</code></pre>
 </div>
 </div>
 <div id="social-impact---total-harm" class="section level2">
 <h2>Social impact - total harm</h2>
 <p>As social impact the total harm to society will be analysed. The total harm will be the sum of fatalities and injuries caused by the event type. Thus we’ll try to find out which types of events (as indicated in the EVTYPE variable), across all United States, are most harmful with respect to population health.</p>
-<pre class="r"><code>social &lt;- select(storm.data, evtype, fatalities, injuries) %&gt;%
-  mutate(total.harm = fatalities + injuries) %&gt;%
-  group_by(evtype) %&gt;%
-  summarize(avg.fatalities = mean(fatalities),
-            avg.injuries = mean(injuries),
-            avg.total.harm = mean(total.harm))
-str(social)</code></pre>
-<pre><code>## Classes 'tbl_df', 'tbl' and 'data.frame':    841 obs. of  4 variables:
-##  $ evtype        : Factor w/ 841 levels &quot;HIGH SURF ADVISORY&quot;,..: 1 2 3 4 5 6 7 8 9 10 ...
-##  $ avg.fatalities: num  0 0.00457 0.01802 0.05185 0.00229 ...
-##  $ avg.injuries  : num  0 0.00304 0.03274 0.33194 0.03163 ...
-##  $ avg.total.harm: num  0 0.00761 0.05076 0.38379 0.03392 ...
-##  - attr(*, &quot;drop&quot;)= logi TRUE</code></pre>
+<pre class="r"><code>social &lt;- dplyr::select(storm.data, evtype, fatalities, injuries) %&gt;%
+  dplyr::group_by(evtype) %&gt;%
+  dplyr::summarize(fatalities = sum(fatalities),
+            injuries = sum(injuries)) %&gt;%
+  dplyr::filter(fatalities &gt; 0 | injuries &gt; 0)
+kable(social)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">evtype</th>
+<th align="right">fatalities</th>
+<th align="right">injuries</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">WAVES</td>
+<td align="right">217</td>
+<td align="right">390</td>
+</tr>
+<tr class="even">
+<td align="left">FLOOD</td>
+<td align="right">1560</td>
+<td align="right">8712</td>
+</tr>
+<tr class="odd">
+<td align="left">LIGHTNING</td>
+<td align="right">817</td>
+<td align="right">5232</td>
+</tr>
+<tr class="even">
+<td align="left">WIND</td>
+<td align="right">1191</td>
+<td align="right">11319</td>
+</tr>
+<tr class="odd">
+<td align="left">OTHER</td>
+<td align="right">580</td>
+<td align="right">544</td>
+</tr>
+<tr class="even">
+<td align="left">HEAT</td>
+<td align="right">3144</td>
+<td align="right">9228</td>
+</tr>
+<tr class="odd">
+<td align="left">DRY</td>
+<td align="right">32</td>
+<td align="right">28</td>
+</tr>
+<tr class="even">
+<td align="left">RAIN</td>
+<td align="right">107</td>
+<td align="right">308</td>
+</tr>
+<tr class="odd">
+<td align="left">SNOW</td>
+<td align="right">151</td>
+<td align="right">1163</td>
+</tr>
+<tr class="even">
+<td align="left">COLD</td>
+<td align="right">540</td>
+<td align="right">973</td>
+</tr>
+<tr class="odd">
+<td align="left">TIDE</td>
+<td align="right">11</td>
+<td align="right">5</td>
+</tr>
+<tr class="even">
+<td align="left">AVALANCHE</td>
+<td align="right">225</td>
+<td align="right">171</td>
+</tr>
+<tr class="odd">
+<td align="left">ICE</td>
+<td align="right">21</td>
+<td align="right">412</td>
+</tr>
+<tr class="even">
+<td align="left">BLIZZARD</td>
+<td align="right">101</td>
+<td align="right">805</td>
+</tr>
+<tr class="odd">
+<td align="left">DUST</td>
+<td align="right">24</td>
+<td align="right">483</td>
+</tr>
+<tr class="even">
+<td align="left">FIRE</td>
+<td align="right">90</td>
+<td align="right">1608</td>
+</tr>
+<tr class="odd">
+<td align="left">STORM</td>
+<td align="right">389</td>
+<td align="right">3790</td>
+</tr>
+<tr class="even">
+<td align="left">HAIL</td>
+<td align="right">45</td>
+<td align="right">1467</td>
+</tr>
+<tr class="odd">
+<td align="left">FOG</td>
+<td align="right">80</td>
+<td align="right">1076</td>
+</tr>
+<tr class="even">
+<td align="left">DROUGHT</td>
+<td align="right">6</td>
+<td align="right">19</td>
+</tr>
+<tr class="odd">
+<td align="left">DROWNING</td>
+<td align="right">1</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">HURRICANE</td>
+<td align="right">133</td>
+<td align="right">1333</td>
+</tr>
+<tr class="odd">
+<td align="left">SLUMP</td>
+<td align="right">44</td>
+<td align="right">55</td>
+</tr>
+<tr class="even">
+<td align="left">TORNADO</td>
+<td align="right">5636</td>
+<td align="right">91407</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>social</code></pre>
+<pre><code>## Source: local data frame [24 x 3]
+## 
+##       evtype fatalities injuries
+## 1      WAVES        217      390
+## 2      FLOOD       1560     8712
+## 3  LIGHTNING        817     5232
+## 4       WIND       1191    11319
+## 5      OTHER        580      544
+## 6       HEAT       3144     9228
+## 7        DRY         32       28
+## 8       RAIN        107      308
+## 9       SNOW        151     1163
+## 10      COLD        540      973
+## ..       ...        ...      ...</code></pre>
 </div>
 
 
