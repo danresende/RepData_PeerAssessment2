@@ -162,157 +162,169 @@ storm.data$evtype &lt;- mapvalues(storm.data$evtype, from = old.types, to = type
 <h2>Social impact - total harm</h2>
 <p>As social impact the total harm to society will be analysed. The total harm will be the sum of fatalities and injuries caused by the event type. Thus we’ll try to find out which types of events (as indicated in the EVTYPE variable), across all United States, are most harmful with respect to population health.</p>
 <pre class="r"><code>social &lt;- dplyr::select(storm.data, evtype, fatalities, injuries) %&gt;%
+  dplyr::mutate(total.harm = fatalities + injuries) %&gt;%
   dplyr::group_by(evtype) %&gt;%
   dplyr::summarize(fatalities = sum(fatalities),
-            injuries = sum(injuries)) %&gt;%
-  dplyr::filter(fatalities &gt; 0 | injuries &gt; 0)
-kable(social)</code></pre>
+            injuries = sum(injuries), total.harm = sum(total.harm)) %&gt;%
+  dplyr::filter(fatalities &gt; 0 | injuries &gt; 0) %&gt;%
+  dplyr::arrange(desc(total.harm))
+kable(social, col.names = c(&quot;EVENT TYPE&quot;, &quot;FATALITIES&quot;, &quot;INJURIES&quot;, &quot;TOTAL HARM&quot;))</code></pre>
 <table>
 <thead>
 <tr class="header">
-<th align="left">evtype</th>
-<th align="right">fatalities</th>
-<th align="right">injuries</th>
+<th align="left">EVENT TYPE</th>
+<th align="right">FATALITIES</th>
+<th align="right">INJURIES</th>
+<th align="right">TOTAL HARM</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">WAVES</td>
-<td align="right">217</td>
-<td align="right">390</td>
-</tr>
-<tr class="even">
-<td align="left">FLOOD</td>
-<td align="right">1560</td>
-<td align="right">8712</td>
-</tr>
-<tr class="odd">
-<td align="left">LIGHTNING</td>
-<td align="right">817</td>
-<td align="right">5232</td>
+<td align="left">TORNADO</td>
+<td align="right">5636</td>
+<td align="right">91407</td>
+<td align="right">97043</td>
 </tr>
 <tr class="even">
 <td align="left">WIND</td>
 <td align="right">1191</td>
 <td align="right">11319</td>
+<td align="right">12510</td>
 </tr>
 <tr class="odd">
-<td align="left">OTHER</td>
-<td align="right">580</td>
-<td align="right">544</td>
-</tr>
-<tr class="even">
 <td align="left">HEAT</td>
 <td align="right">3144</td>
 <td align="right">9228</td>
-</tr>
-<tr class="odd">
-<td align="left">DRY</td>
-<td align="right">32</td>
-<td align="right">28</td>
+<td align="right">12372</td>
 </tr>
 <tr class="even">
-<td align="left">RAIN</td>
-<td align="right">107</td>
-<td align="right">308</td>
+<td align="left">FLOOD</td>
+<td align="right">1560</td>
+<td align="right">8712</td>
+<td align="right">10272</td>
 </tr>
 <tr class="odd">
-<td align="left">SNOW</td>
-<td align="right">151</td>
-<td align="right">1163</td>
+<td align="left">LIGHTNING</td>
+<td align="right">817</td>
+<td align="right">5232</td>
+<td align="right">6049</td>
+</tr>
+<tr class="even">
+<td align="left">STORM</td>
+<td align="right">389</td>
+<td align="right">3790</td>
+<td align="right">4179</td>
+</tr>
+<tr class="odd">
+<td align="left">FIRE</td>
+<td align="right">90</td>
+<td align="right">1608</td>
+<td align="right">1698</td>
 </tr>
 <tr class="even">
 <td align="left">COLD</td>
 <td align="right">540</td>
 <td align="right">973</td>
+<td align="right">1513</td>
 </tr>
 <tr class="odd">
-<td align="left">TIDE</td>
-<td align="right">11</td>
-<td align="right">5</td>
-</tr>
-<tr class="even">
-<td align="left">AVALANCHE</td>
-<td align="right">225</td>
-<td align="right">171</td>
-</tr>
-<tr class="odd">
-<td align="left">ICE</td>
-<td align="right">21</td>
-<td align="right">412</td>
-</tr>
-<tr class="even">
-<td align="left">BLIZZARD</td>
-<td align="right">101</td>
-<td align="right">805</td>
-</tr>
-<tr class="odd">
-<td align="left">DUST</td>
-<td align="right">24</td>
-<td align="right">483</td>
-</tr>
-<tr class="even">
-<td align="left">FIRE</td>
-<td align="right">90</td>
-<td align="right">1608</td>
-</tr>
-<tr class="odd">
-<td align="left">STORM</td>
-<td align="right">389</td>
-<td align="right">3790</td>
-</tr>
-<tr class="even">
 <td align="left">HAIL</td>
 <td align="right">45</td>
 <td align="right">1467</td>
-</tr>
-<tr class="odd">
-<td align="left">FOG</td>
-<td align="right">80</td>
-<td align="right">1076</td>
-</tr>
-<tr class="even">
-<td align="left">DROUGHT</td>
-<td align="right">6</td>
-<td align="right">19</td>
-</tr>
-<tr class="odd">
-<td align="left">DROWNING</td>
-<td align="right">1</td>
-<td align="right">0</td>
+<td align="right">1512</td>
 </tr>
 <tr class="even">
 <td align="left">HURRICANE</td>
 <td align="right">133</td>
 <td align="right">1333</td>
+<td align="right">1466</td>
 </tr>
 <tr class="odd">
+<td align="left">SNOW</td>
+<td align="right">151</td>
+<td align="right">1163</td>
+<td align="right">1314</td>
+</tr>
+<tr class="even">
+<td align="left">FOG</td>
+<td align="right">80</td>
+<td align="right">1076</td>
+<td align="right">1156</td>
+</tr>
+<tr class="odd">
+<td align="left">OTHER</td>
+<td align="right">580</td>
+<td align="right">544</td>
+<td align="right">1124</td>
+</tr>
+<tr class="even">
+<td align="left">BLIZZARD</td>
+<td align="right">101</td>
+<td align="right">805</td>
+<td align="right">906</td>
+</tr>
+<tr class="odd">
+<td align="left">WAVES</td>
+<td align="right">217</td>
+<td align="right">390</td>
+<td align="right">607</td>
+</tr>
+<tr class="even">
+<td align="left">DUST</td>
+<td align="right">24</td>
+<td align="right">483</td>
+<td align="right">507</td>
+</tr>
+<tr class="odd">
+<td align="left">ICE</td>
+<td align="right">21</td>
+<td align="right">412</td>
+<td align="right">433</td>
+</tr>
+<tr class="even">
+<td align="left">RAIN</td>
+<td align="right">107</td>
+<td align="right">308</td>
+<td align="right">415</td>
+</tr>
+<tr class="odd">
+<td align="left">AVALANCHE</td>
+<td align="right">225</td>
+<td align="right">171</td>
+<td align="right">396</td>
+</tr>
+<tr class="even">
 <td align="left">SLUMP</td>
 <td align="right">44</td>
 <td align="right">55</td>
+<td align="right">99</td>
+</tr>
+<tr class="odd">
+<td align="left">DRY</td>
+<td align="right">32</td>
+<td align="right">28</td>
+<td align="right">60</td>
 </tr>
 <tr class="even">
-<td align="left">TORNADO</td>
-<td align="right">5636</td>
-<td align="right">91407</td>
+<td align="left">DROUGHT</td>
+<td align="right">6</td>
+<td align="right">19</td>
+<td align="right">25</td>
+</tr>
+<tr class="odd">
+<td align="left">TIDE</td>
+<td align="right">11</td>
+<td align="right">5</td>
+<td align="right">16</td>
+</tr>
+<tr class="even">
+<td align="left">DROWNING</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>social</code></pre>
-<pre><code>## Source: local data frame [24 x 3]
-## 
-##       evtype fatalities injuries
-## 1      WAVES        217      390
-## 2      FLOOD       1560     8712
-## 3  LIGHTNING        817     5232
-## 4       WIND       1191    11319
-## 5      OTHER        580      544
-## 6       HEAT       3144     9228
-## 7        DRY         32       28
-## 8       RAIN        107      308
-## 9       SNOW        151     1163
-## 10      COLD        540      973
-## ..       ...        ...      ...</code></pre>
 </div>
 
 

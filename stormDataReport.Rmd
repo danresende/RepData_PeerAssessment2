@@ -115,9 +115,14 @@ As social impact the total harm to society will be analysed. The total harm will
 
 ```{r echo = TRUE}
 social <- dplyr::select(storm.data, evtype, fatalities, injuries) %>%
+  dplyr::mutate(total.harm = fatalities + injuries) %>%
   dplyr::group_by(evtype) %>%
   dplyr::summarize(fatalities = sum(fatalities),
-            injuries = sum(injuries)) %>%
-  dplyr::filter(fatalities > 0 | injuries > 0)
-kable(social, col.names = c("EVENT TYPE", "FATALITIES", "INJURIES"))
-social
+            injuries = sum(injuries), total.harm = sum(total.harm)) %>%
+  dplyr::filter(fatalities > 0 | injuries > 0) %>%
+  dplyr::arrange(desc(total.harm))
+kable(social, col.names = c("EVENT TYPE", "FATALITIES", "INJURIES", "TOTAL HARM"))
+```
+
+
+
